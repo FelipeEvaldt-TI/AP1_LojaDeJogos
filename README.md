@@ -189,3 +189,13 @@ http://localhost:5214
 - **JSON**
 - **Bruno**
 - **Git/GitHub**
+
+---
+
+## Vídeo de demonstração
+
+O vídeo apresenta o funcionamento da API, incluindo a execução do projeto,
+a explicação dos principais elementos do código e os testes dos endpoints
+utilizando o Bruno.
+
+[Assistir ao vídeo de demonstração no Google Drive](https://drive.google.com/drive/folders/1UcCt8FeiIGxTZZxhD_AvFioN9KRCRcc1?usp=sharing)
