@@ -1,6 +1,9 @@
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<ApiDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 var app = builder.Build();
 
 var jogos = new List<Jogo>
@@ -11,14 +14,15 @@ var jogos = new List<Jogo>
 
 app.MapGet("/", () => "API do catálogo de jogos está no ar!");
 
-app.MapGet("/api/jogos", () =>
+app.MapGet("/api/jogos", async (ApiDbContext db) =>
 {
+    var jogos = await db.Jogos.ToListAsync();
     return Results.Ok(jogos);
 });
 
-app.MapGet("/api/jogos/{id:int}", (int id) => 
+app.MapGet("/api/jogos/{id:int}", async (int id, ApiDbContext db) => 
 {
-    var jogoEncontrado = jogos.Find(jogo => jogo.id == id);
+    var jogoEncontrado = db.Jogos.Find(id);
     if (jogoEncontrado is null)
     {
         return Results.NotFound();
@@ -26,12 +30,12 @@ app.MapGet("/api/jogos/{id:int}", (int id) =>
     return Results.Ok(jogoEncontrado);
 });
 
-app.MapPost("/api/jogos", (JogoDTO dados) =>
+app.MapPost("/api/jogos", async (JogoEntity dados, ApiDbContext db) =>
 {
-   int proximoId = jogos.Count + 1;
-   var novoJogo = new Jogo(proximoId, dados.titulo, true);
-   jogos.Add(novoJogo);
-   return Results.Created($"/api/jogos/{novoJogo.id}", novoJogo);
+   
+   db.Jogos.Add(dados);
+   await db.SaveChangesAsync();
+   return Results.Created($"/api/jogos/{dados.Id}", dados);
 });
 
 app.MapPut("/api/jogos/{id:int}", (int id, JogoAtualizadoDTO dados) =>
@@ -46,20 +50,38 @@ app.MapPut("/api/jogos/{id:int}", (int id, JogoAtualizadoDTO dados) =>
     return Results.Ok(atualizado);
 });
 
-app.MapDelete("/api/jogos/{id:int}", (int id) =>
+app.MapDelete("/api/jogos/{id:int}",async (int id, ApiDbContext db) =>
 {
-    int indice = jogos.FindIndex(JogoDaLista => JogoDaLista.id == id);
-    if (indice == -1)
+    var jogo = await db.Jogos.FindAsync(id);
+    
+    if (jogo is null)
     {
         return Results.NotFound();
     }
-    jogos.RemoveAt(indice);
+    
+    db.Jogos.Remove(jogo);
+    await db.SaveChangesAsync();
 
     return Results.NoContent();
 });
 
-
 app.Run();
+
+class JogoEntity
+{
+  public int Id { get; set; }  
+  public string Nome { get; set;} = string.Empty;
+  public bool Disponivel { get; set;}
+};
+
+class ApiDbContext : DbContext
+{
+    public ApiDbContext(DbContextOptions<ApiDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<JogoEntity> Jogos => Set<JogoEntity>();
+}
 
 record Jogo(int id, string titulo, bool disponivel);
 record JogoDTO(string titulo);
