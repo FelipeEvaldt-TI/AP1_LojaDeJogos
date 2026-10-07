@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de Jogos - Demonstração</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="container header-container">
+      <div class="logo-area">
+        <span class="logo-icon" aria-hidden="true">🎮</span>
+        <div>
+          <h1>Catálogo de Jogos</h1>
+          <p class="subtitle">Interface de Demonstração Visual</p>
+        </div>
+      </div>
+      <div class="badge-demo" aria-label="Aviso de modo de teste">
+        MODO DEMONSTRAÇÃO LOCAL
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <!-- Banner de aviso obrigatório -->
+    <section class="banner-aviso" role="region" aria-label="Aviso sobre os dados">
+      <div class="banner-icon" aria-hidden="true">ℹ️</div>
+      <div class="banner-text">
+        <strong>Atenção:</strong> Esta interface utiliza exclusivamente dados fictícios locais (em memória do navegador).
+        <strong>Nenhuma requisição HTTP ou conexão com a API backend é realizada.</strong>
+      </div>
+    </section>
+
+    <!-- Área de feedback / alertas -->
+    <div id="feedback-alert" class="alert-box hidden" role="status" aria-live="polite"></div>
+
+    <div class="layout-grid">
+      <!-- Coluna: Formulário -->
+      <section class="card form-section" aria-labelledby="form-heading">
+        <div class="card-header">
+          <h2 id="form-heading">Adicionar Jogo</h2>
+          <span id="form-mode-badge" class="mode-badge">Novo Registro</span>
+        </div>
+
+        <form id="jogo-form" novalidate>
+          <div class="form-group">
+            <label for="jogo-id">ID do Jogo (Gerado Automaticamente)</label>
+            <input type="text" id="jogo-id" name="id" readonly placeholder="Automático" class="input-readonly">
+          </div>
+
+          <div class="form-group">
+            <label for="jogo-titulo">Título do Jogo <span class="required" aria-hidden="true">*</span></label>
+            <input 
+              type="text" 
+              id="jogo-titulo" 
+              name="titulo" 
+              placeholder="Ex.: The Witcher 3: Wild Hunt" 
+              required 
+              autocomplete="off"
+              aria-required="true"
+            >
+            <small class="field-help" id="titulo-help">Informe o nome completo do jogo.</small>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-container" for="jogo-disponivel">
+              <input type="checkbox" id="jogo-disponivel" name="disponivel" checked>
+              <span class="checkbox-custom" aria-hidden="true"></span>
+              <span class="checkbox-label">Jogo disponível para compra / catálogo</span>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="btn-salvar" class="btn btn-primary">
+              <span aria-hidden="true">➕</span> Adicionar Jogo
+            </button>
+            <button type="button" id="btn-cancelar" class="btn btn-secondary hidden">
+              Cancelar Edição
+            </button>
+            <button type="button" id="btn-limpar" class="btn btn-outline">
+              Limpar Campos
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Coluna: Lista de Jogos e Estatísticas -->
+      <section class="card list-section" aria-labelledby="list-heading">
+        <div class="card-header list-header">
+          <div>
+            <h2 id="list-heading">Catálogo de Jogos</h2>
+            <p class="section-subtitle">Gerencie os títulos cadastrados localmente</p>
+          </div>
+          <button type="button" id="btn-restaurar-dados" class="btn btn-sm btn-outline" title="Restaura os jogos padrão da demonstração">
+            🔄 Restaurar Padrão
+          </button>
+        </div>
+
+        <!-- Estatísticas resumidas -->
+        <div class="stats-bar" aria-label="Estatísticas do catálogo">
+          <div class="stat-item">
+            <span class="stat-label">Total:</span>
+            <span id="stat-total" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Disponíveis:</span>
+            <span id="stat-disponiveis" class="stat-value stat-success">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Indisponíveis:</span>
+            <span id="stat-indisponiveis" class="stat-value stat-danger">0</span>
+          </div>
+        </div>
+
+        <!-- Lista dinâmica -->
+        <div id="lista-jogos" class="jogos-container" role="list" aria-label="Lista de jogos cadastrados">
+          <!-- Jogos renderizados via JavaScript -->
+        </div>
+
+        <!-- Mensagem de lista vazia -->
+        <div id="empty-state" class="empty-state hidden">
+          <span class="empty-icon" aria-hidden="true">📭</span>
+          <p>Nenhum jogo cadastrado no momento.</p>
+          <small>Utilize o formulário ao lado para adicionar um novo título.</small>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container footer-content">
+      <p>Demonstração Frontend para Catálogo de Jogos (AP1) &bull; Apenas dados locais</p>
+      <p class="footer-note">Desenvolvido com HTML, CSS e JavaScript puros (sem frameworks ou bibliotecas externas).</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
