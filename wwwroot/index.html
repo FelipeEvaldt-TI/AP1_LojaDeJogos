@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catálogo de Jogos - Demonstração</title>
+  <title>Catálogo de Jogos</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,25 +13,16 @@
         <span class="logo-icon" aria-hidden="true">🎮</span>
         <div>
           <h1>Catálogo de Jogos</h1>
-          <p class="subtitle">Interface de Demonstração Visual</p>
+          <p class="subtitle">Gerenciamento Integrado com API</p>
         </div>
       </div>
-      <div class="badge-demo" aria-label="Aviso de modo de teste">
-        MODO DEMONSTRAÇÃO LOCAL
+      <div class="badge-status-api" id="badge-api-status" aria-label="Status da API">
+        API: /api/jogos
       </div>
     </div>
   </header>
 
   <main class="container main-content">
-    <!-- Banner de aviso obrigatório -->
-    <section class="banner-aviso" role="region" aria-label="Aviso sobre os dados">
-      <div class="banner-icon" aria-hidden="true">ℹ️</div>
-      <div class="banner-text">
-        <strong>Atenção:</strong> Esta interface utiliza exclusivamente dados fictícios locais (em memória do navegador).
-        <strong>Nenhuma requisição HTTP ou conexão com a API backend é realizada.</strong>
-      </div>
-    </section>
-
     <!-- Área de feedback / alertas -->
     <div id="feedback-alert" class="alert-box hidden" role="status" aria-live="polite"></div>
 
@@ -90,10 +81,10 @@
         <div class="card-header list-header">
           <div>
             <h2 id="list-heading">Catálogo de Jogos</h2>
-            <p class="section-subtitle">Gerencie os títulos cadastrados localmente</p>
+            <p class="section-subtitle">Títulos cadastrados no catálogo</p>
           </div>
-          <button type="button" id="btn-restaurar-dados" class="btn btn-sm btn-outline" title="Restaura os jogos padrão da demonstração">
-            🔄 Restaurar Padrão
+          <button type="button" id="btn-recarregar" class="btn btn-sm btn-outline" title="Recarrega os jogos da API">
+            🔄 Atualizar Lista
           </button>
         </div>
 
@@ -113,6 +104,12 @@
           </div>
         </div>
 
+        <!-- Indicador de carregamento -->
+        <div id="loading-state" class="loading-state hidden" role="status" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <p>Carregando jogos da API...</p>
+        </div>
+
         <!-- Lista dinâmica -->
         <div id="lista-jogos" class="jogos-container" role="list" aria-label="Lista de jogos cadastrados">
           <!-- Jogos renderizados via JavaScript -->
@@ -130,8 +127,8 @@
 
   <footer class="app-footer">
     <div class="container footer-content">
-      <p>Demonstração Frontend para Catálogo de Jogos (AP1) &bull; Apenas dados locais</p>
-      <p class="footer-note">Desenvolvido com HTML, CSS e JavaScript puros (sem frameworks ou bibliotecas externas).</p>
+      <p>Catálogo de Jogos &bull; Integração com API REST (.NET 10)</p>
+      <p class="footer-note">Desenvolvido com HTML, CSS e JavaScript puros.</p>
     </div>
   </footer>
 

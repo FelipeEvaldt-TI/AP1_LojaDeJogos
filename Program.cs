@@ -4,13 +4,14 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApiDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddCors();
 var app = builder.Build();
 
-var jogos = new List<Jogo>
-{
-    new Jogo(1, "Hollow Knight", true),
-    new Jogo(2, "Grand Theft Auto 6", false)
-};
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.UseCors(policy => policy.WithOrigins("http://localhost:5214")
+    .AllowAnyHeader().AllowAnyMethod());
 
 app.MapGet("/", () => "API do catálogo de jogos está no ar!");
 
@@ -38,30 +39,23 @@ app.MapPost("/api/jogos", async (JogoEntity dados, ApiDbContext db) =>
    return Results.Created($"/api/jogos/{dados.Id}", dados);
 });
 
-app.MapPut("/api/jogos/{id:int}", (int id, JogoAtualizadoDTO dados) =>
+app.MapPut("/api/jogos/{id:int}", async (int id, JogoEntity JogoAtualizado, ApiDbContext db) =>
 {
-    int indice = jogos.FindIndex(JogoDaLista => JogoDaLista.id == id);
-    if (indice == -1)
-    {
-        return Results.NotFound();
-    }
-    var atualizado = new Jogo(id, dados.titulo, dados.disponivel);
-    jogos[indice] = atualizado;
-    return Results.Ok(atualizado);
+    var jogo = await db.Jogos.FindAsync(id);
+    if (jogo is null) return Results.NotFound();
+    jogo.Nome = JogoAtualizado.Nome;
+    jogo.Disponivel = JogoAtualizado.Disponivel;
+    await db.SaveChangesAsync();
+    return Results.Ok(jogo);
 });
 
 app.MapDelete("/api/jogos/{id:int}",async (int id, ApiDbContext db) =>
 {
     var jogo = await db.Jogos.FindAsync(id);
-    
-    if (jogo is null)
-    {
-        return Results.NotFound();
-    }
+    if (jogo is null) return Results.NotFound();
     
     db.Jogos.Remove(jogo);
     await db.SaveChangesAsync();
-
     return Results.NoContent();
 });
 

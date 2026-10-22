@@ -1,22 +1,24 @@
 /**
- * Catálogo de Jogos - Script da Interface de Demonstração
+ * Catálogo de Jogos - Script Frontend Integrado com API REST
  * 
- * ATENÇÃO: Este script utiliza exclusivamente dados fictícios locais (em memória).
- * NÃO realiza nenhuma requisição HTTP (fetch/XMLHttpRequest) ou conexão com o backend.
+ * Endpoints consumidos:
+ * - GET    /api/jogos         -> Listar jogos
+ * - GET    /api/jogos/{id}    -> Obter jogo por ID
+ * - POST   /api/jogos         -> Cadastrar novo jogo
+ * - PUT    /api/jogos/{id}    -> Atualizar jogo existente
+ * - DELETE /api/jogos/{id}    -> Remover jogo
  */
 
 (function () {
   'use strict';
 
-  // Dados iniciais fictícios baseados no catálogo da AP1
-  const DADOS_PADRAO = [
-    { id: 1, titulo: "Hollow Knight", disponivel: true },
-    { id: 2, titulo: "Grand Theft Auto 6", disponivel: false },
-    { id: 3, titulo: "Celeste", disponivel: true }
-  ];
+  // Configuração da URL da API (usa mesma origem se na porta 5214, ou aponta explicitamente para http://localhost:5214)
+  const API_BASE_URL = window.location.origin === 'http://localhost:5214'
+    ? '/api/jogos'
+    : 'http://localhost:5214/api/jogos';
 
-  // Estado da aplicação (em memória)
-  let catalogoJogos = [...DADOS_PADRAO];
+  // Estado da aplicação
+  let catalogoJogos = [];
   let idEmEdicao = null;
   let timerAlerta = null;
 
@@ -28,71 +30,96 @@
   const btnSalvar = document.getElementById('btn-salvar');
   const btnCancelar = document.getElementById('btn-cancelar');
   const btnLimpar = document.getElementById('btn-limpar');
-  const btnRestaurar = document.getElementById('btn-restaurar-dados');
+  const btnRecarregar = document.getElementById('btn-recarregar');
 
   const formHeading = document.getElementById('form-heading');
   const formModeBadge = document.getElementById('form-mode-badge');
   const feedbackAlert = document.getElementById('feedback-alert');
 
   const containerLista = document.getElementById('lista-jogos');
+  const loadingState = document.getElementById('loading-state');
   const emptyState = document.getElementById('empty-state');
 
   const statTotal = document.getElementById('stat-total');
   const statDisponiveis = document.getElementById('stat-disponiveis');
   const statIndisponiveis = document.getElementById('stat-indisponiveis');
 
-  // Inicialização
+  // Inicialização ao carregar a página
   document.addEventListener('DOMContentLoaded', () => {
-    carregarDadosDoArmazenamento();
-    renderizarJogos();
-    atualizarEstatisticas();
     configurarEventos();
+    carregarJogos();
   });
 
   /**
-   * Configuração de ouvintes de eventos da interface
+   * Configura os ouvintes de eventos da interface
    */
   function configurarEventos() {
     form.addEventListener('submit', tratarSubmissaoFormulario);
     btnCancelar.addEventListener('click', cancelarEdicao);
     btnLimpar.addEventListener('click', limparFormulario);
-    btnRestaurar.addEventListener('click', restaurarDadosPadrao);
+    if (btnRecarregar) {
+      btnRecarregar.addEventListener('click', () => {
+        carregarJogos();
+        exibirAlerta('Atualizando lista de jogos...', 'info');
+      });
+    }
   }
 
   /**
-   * Tenta carregar dados do sessionStorage ou usa os dados padrão
+   * Controla a visibilidade do indicador de carregamento
    */
-  function carregarDadosDoArmazenamento() {
+  function alternarCarregamento(ativo) {
+    if (ativo) {
+      loadingState.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+      containerLista.classList.add('hidden');
+    } else {
+      loadingState.classList.add('hidden');
+      containerLista.classList.remove('hidden');
+    }
+  }
+
+  /**
+   * Obtém a lista de jogos da API (GET /api/jogos)
+   */
+  async function carregarJogos() {
+    alternarCarregamento(true);
+
     try {
-      const salvos = sessionStorage.getItem('loja_jogos_demo_data');
-      if (salvos) {
-        catalogoJogos = JSON.parse(salvos);
-        return;
+      const resposta = await fetch(API_BASE_URL, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!resposta.ok) {
+        throw new Error(`Falha ao obter jogos (HTTP ${resposta.status}: ${resposta.statusText || 'Erro no servidor'})`);
       }
-    } catch (e) {
-      console.warn('Não foi possível ler do sessionStorage. Usando dados locais em memória.', e);
+
+      const dados = await resposta.json();
+      catalogoJogos = Array.isArray(dados) ? dados : (dados.value || []);
+
+      renderizarJogos();
+      atualizarEstatisticas();
+    } catch (erro) {
+      console.error('Erro na requisição GET /api/jogos:', erro);
+      catalogoJogos = [];
+      renderizarJogos();
+      atualizarEstatisticas();
+      exibirAlerta(`Não foi possível carregar os jogos da API: ${erro.message}`, 'danger');
+    } finally {
+      alternarCarregamento(false);
     }
-    catalogoJogos = JSON.parse(JSON.stringify(DADOS_PADRAO));
   }
 
   /**
-   * Salva estado na sessão (para manter durante a navegação/recarga)
-   */
-  function persistirDados() {
-    try {
-      sessionStorage.setItem('loja_jogos_demo_data', JSON.stringify(catalogoJogos));
-    } catch (e) {
-      console.warn('Não foi possível salvar no sessionStorage.', e);
-    }
-  }
-
-  /**
-   * Renderiza a lista de jogos na tela
+   * Renderiza a lista de jogos na tela inserindo valores estritamente via textContent
    */
   function renderizarJogos() {
     containerLista.innerHTML = '';
 
-    if (catalogoJogos.length === 0) {
+    if (!catalogoJogos || catalogoJogos.length === 0) {
       emptyState.classList.remove('hidden');
       return;
     }
@@ -100,51 +127,63 @@
     emptyState.classList.add('hidden');
 
     catalogoJogos.forEach((jogo) => {
-      const card = document.createElement('article');
-      card.className = `jogo-card ${idEmEdicao === jogo.id ? 'selected-for-edit' : ''}`;
-      card.setAttribute('role', 'listitem');
-      card.setAttribute('id', `jogo-card-${jogo.id}`);
+      const id = jogo.id;
+      const titulo = jogo.nome || jogo.titulo || '(Sem título)';
+      const disponivel = Boolean(jogo.disponivel);
 
+      const card = document.createElement('article');
+      card.className = `jogo-card ${idEmEdicao === id ? 'selected-for-edit' : ''}`;
+      card.setAttribute('role', 'listitem');
+      card.setAttribute('id', `jogo-card-${id}`);
+
+      // Informações do jogo
       const infoDiv = document.createElement('div');
       infoDiv.className = 'jogo-info';
 
       const idTag = document.createElement('span');
       idTag.className = 'jogo-id-tag';
-      idTag.textContent = `ID #${jogo.id}`;
+      idTag.textContent = `ID #${id}`;
 
-      const titulo = document.createElement('h3');
-      titulo.className = 'jogo-titulo';
-      titulo.textContent = jogo.titulo;
+      const tituloEl = document.createElement('h3');
+      tituloEl.className = 'jogo-titulo';
+      tituloEl.textContent = titulo;
 
       const badgeStatus = document.createElement('span');
-      badgeStatus.className = `status-badge ${jogo.disponivel ? 'disponivel' : 'indisponivel'}`;
-      badgeStatus.innerHTML = jogo.disponivel 
-        ? '<span aria-hidden="true">●</span> Disponível' 
-        : '<span aria-hidden="true">○</span> Indisponível';
+      badgeStatus.className = `status-badge ${disponivel ? 'disponivel' : 'indisponivel'}`;
+
+      const iconStatus = document.createElement('span');
+      iconStatus.setAttribute('aria-hidden', 'true');
+      iconStatus.textContent = disponivel ? '● ' : '○ ';
+
+      const labelStatus = document.createElement('span');
+      labelStatus.textContent = disponivel ? 'Disponível' : 'Indisponível';
+
+      badgeStatus.appendChild(iconStatus);
+      badgeStatus.appendChild(labelStatus);
 
       infoDiv.appendChild(idTag);
-      infoDiv.appendChild(titulo);
+      infoDiv.appendChild(tituloEl);
       infoDiv.appendChild(badgeStatus);
 
-      // Ações
+      // Botões de ação
       const acoesDiv = document.createElement('div');
       acoesDiv.className = 'jogo-acoes';
 
-      // Botão Editar / Visualizar
+      // Botão Editar
       const btnEditar = document.createElement('button');
       btnEditar.type = 'button';
       btnEditar.className = 'btn btn-sm btn-outline';
-      btnEditar.innerHTML = '<span aria-hidden="true">✏️</span> Editar';
-      btnEditar.setAttribute('aria-label', `Editar jogo ${jogo.titulo} (ID ${jogo.id})`);
-      btnEditar.addEventListener('click', () => carregarParaEdicao(jogo.id));
+      btnEditar.textContent = '✏️ Editar';
+      btnEditar.setAttribute('aria-label', `Editar jogo ${titulo} (ID ${id})`);
+      btnEditar.addEventListener('click', () => carregarParaEdicao(jogo));
 
       // Botão Excluir
       const btnExcluir = document.createElement('button');
       btnExcluir.type = 'button';
       btnExcluir.className = 'btn btn-sm btn-danger';
-      btnExcluir.innerHTML = '<span aria-hidden="true">🗑️</span> Excluir';
-      btnExcluir.setAttribute('aria-label', `Excluir jogo ${jogo.titulo} (ID ${jogo.id})`);
-      btnExcluir.addEventListener('click', () => excluirJogo(jogo.id, jogo.titulo));
+      btnExcluir.textContent = '🗑️ Excluir';
+      btnExcluir.setAttribute('aria-label', `Excluir jogo ${titulo} (ID ${id})`);
+      btnExcluir.addEventListener('click', () => excluirJogo(id, titulo));
 
       acoesDiv.appendChild(btnEditar);
       acoesDiv.appendChild(btnExcluir);
@@ -157,22 +196,22 @@
   }
 
   /**
-   * Atualiza os contadores no painel de estatísticas
+   * Atualiza os contadores numéricos de estatísticas
    */
   function atualizarEstatisticas() {
     const total = catalogoJogos.length;
     const disponiveis = catalogoJogos.filter(j => j.disponivel).length;
     const indisponiveis = total - disponiveis;
 
-    statTotal.textContent = total;
-    statDisponiveis.textContent = disponiveis;
-    statIndisponiveis.textContent = indisponiveis;
+    statTotal.textContent = String(total);
+    statDisponiveis.textContent = String(disponiveis);
+    statIndisponiveis.textContent = String(indisponiveis);
   }
 
   /**
-   * Trata o envio do formulário (Criação ou Atualização)
+   * Trata a submissão do formulário (Criação ou Edição)
    */
-  function tratarSubmissaoFormulario(evento) {
+  async function tratarSubmissaoFormulario(evento) {
     evento.preventDefault();
 
     const titulo = inputTitulo.value.trim();
@@ -185,72 +224,158 @@
     }
 
     if (idEmEdicao !== null) {
-      // Atualização
-      const index = catalogoJogos.findIndex(j => j.id === idEmEdicao);
-      if (index !== -1) {
-        catalogoJogos[index] = {
-          id: idEmEdicao,
-          titulo: titulo,
-          disponivel: disponivel
-        };
-        exibirAlerta(`Jogo "${titulo}" atualizado com sucesso no catálogo local!`, 'success');
-      } else {
-        exibirAlerta('Erro: Jogo não encontrado para atualização.', 'danger');
-      }
-      cancelarEdicao();
+      await atualizarJogo(idEmEdicao, titulo, disponivel);
     } else {
-      // Adição (Novo registro)
-      const novoId = catalogoJogos.length > 0 
-        ? Math.max(...catalogoJogos.map(j => j.id)) + 1 
-        : 1;
-
-      const novoJogo = {
-        id: novoId,
-        titulo: titulo,
-        disponivel: disponivel
-      };
-
-      catalogoJogos.push(novoJogo);
-      limparFormulario();
-      exibirAlerta(`Jogo "${novoJogo.titulo}" (ID #${novoJogo.id}) adicionado com sucesso!`, 'success');
+      await criarJogo(titulo, disponivel);
     }
-
-    persistirDados();
-    renderizarJogos();
-    atualizarEstatisticas();
   }
 
   /**
-   * Carrega os dados de um jogo selecionado no formulário para visualização/edição
+   * Cria um novo jogo via POST /api/jogos
    */
-  function carregarParaEdicao(id) {
-    const jogo = catalogoJogos.find(j => j.id === id);
-    if (!jogo) {
-      exibirAlerta('Jogo não encontrado.', 'danger');
+  async function criarJogo(titulo, disponivel) {
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = 'Gravando...';
+
+    // Envia propriedades compatíveis tanto com a collection Bruno ("titulo") quanto com a entidade backend ("nome")
+    const payload = {
+      nome: titulo,
+      titulo: titulo,
+      disponivel: disponivel
+    };
+
+    try {
+      const resposta = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resposta.ok) {
+        throw new Error(`HTTP ${resposta.status}: ${resposta.statusText || 'Erro ao criar'}`);
+      }
+
+      const criado = await resposta.json();
+      const novoId = criado.id ? `#${criado.id}` : '';
+
+      limparFormulario();
+      exibirAlerta(`Jogo "${titulo}" ${novoId} cadastrado com sucesso!`, 'success');
+      await carregarJogos();
+    } catch (erro) {
+      console.error('Erro no POST /api/jogos:', erro);
+      exibirAlerta(`Erro ao cadastrar jogo na API: ${erro.message}`, 'danger');
+    } finally {
+      btnSalvar.disabled = false;
+      btnSalvar.textContent = '➕ Adicionar Jogo';
+    }
+  }
+
+  /**
+   * Atualiza um jogo existente via PUT /api/jogos/{id}
+   */
+  async function atualizarJogo(id, titulo, disponivel) {
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = 'Atualizando...';
+
+    const payload = {
+      id: id,
+      nome: titulo,
+      titulo: titulo,
+      disponivel: disponivel
+    };
+
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resposta.ok) {
+        throw new Error(`HTTP ${resposta.status}: ${resposta.statusText || 'Erro ao atualizar'}`);
+      }
+
+      cancelarEdicao();
+      exibirAlerta(`Jogo "${titulo}" (ID #${id}) atualizado com sucesso!`, 'success');
+      await carregarJogos();
+    } catch (erro) {
+      console.error(`Erro no PUT /api/jogos/${id}:`, erro);
+      exibirAlerta(`Erro ao atualizar o jogo na API: ${erro.message}`, 'danger');
+    } finally {
+      btnSalvar.disabled = false;
+      if (idEmEdicao !== null) {
+        btnSalvar.textContent = '💾 Salvar Alterações';
+      } else {
+        btnSalvar.textContent = '➕ Adicionar Jogo';
+      }
+    }
+  }
+
+  /**
+   * Remove um jogo via DELETE /api/jogos/{id}
+   */
+  async function excluirJogo(id, titulo) {
+    const confirmou = window.confirm(`Deseja realmente remover o jogo "${titulo}" (ID #${id}) do catálogo?`);
+    if (!confirmou) {
       return;
     }
 
-    idEmEdicao = jogo.id;
-    inputId.value = jogo.id;
-    inputTitulo.value = jogo.titulo;
-    checkDisponivel.checked = jogo.disponivel;
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'DELETE'
+      });
 
-    formHeading.textContent = `Editar Jogo #${jogo.id}`;
+      if (!resposta.ok) {
+        throw new Error(`HTTP ${resposta.status}: ${resposta.statusText || 'Erro ao remover'}`);
+      }
+
+      if (idEmEdicao === id) {
+        cancelarEdicao();
+      }
+
+      exibirAlerta(`Jogo "${titulo}" (ID #${id}) removido com sucesso!`, 'success');
+      await carregarJogos();
+    } catch (erro) {
+      console.error(`Erro no DELETE /api/jogos/${id}:`, erro);
+      exibirAlerta(`Erro ao remover o jogo da API: ${erro.message}`, 'danger');
+    }
+  }
+
+  /**
+   * Preenche o formulário para edição com os dados do jogo selecionado
+   */
+  function carregarParaEdicao(jogo) {
+    const id = jogo.id;
+    const titulo = jogo.nome || jogo.titulo || '';
+    const disponivel = Boolean(jogo.disponivel);
+
+    idEmEdicao = id;
+    inputId.value = String(id);
+    inputTitulo.value = titulo;
+    checkDisponivel.checked = disponivel;
+
+    formHeading.textContent = `Editar Jogo #${id}`;
     formModeBadge.textContent = 'Modo Edição';
     formModeBadge.classList.add('editing');
 
-    btnSalvar.innerHTML = '<span aria-hidden="true">💾</span> Salvar Alterações';
+    btnSalvar.textContent = '💾 Salvar Alterações';
     btnCancelar.classList.remove('hidden');
 
     renderizarJogos();
     inputTitulo.focus();
     inputTitulo.select();
 
-    exibirAlerta(`Visualizando detalhes do jogo #${jogo.id} no formulário para edição.`, 'info');
+    exibirAlerta(`Editando jogo #${id}. Altere os campos e clique em Salvar Alterações.`, 'info');
   }
 
   /**
-   * Cancela a edição e retorna o formulário ao modo de adição
+   * Cancela o modo de edição e retorna o formulário ao estado inicial
    */
   function cancelarEdicao() {
     idEmEdicao = null;
@@ -260,14 +385,14 @@
     formModeBadge.textContent = 'Novo Registro';
     formModeBadge.classList.remove('editing');
 
-    btnSalvar.innerHTML = '<span aria-hidden="true">➕</span> Adicionar Jogo';
+    btnSalvar.textContent = '➕ Adicionar Jogo';
     btnCancelar.classList.add('hidden');
 
     renderizarJogos();
   }
 
   /**
-   * Limpa os campos do formulário
+   * Limpa os valores dos campos do formulário
    */
   function limparFormulario() {
     inputId.value = '';
@@ -279,42 +404,8 @@
   }
 
   /**
-   * Exclui um jogo do catálogo local
-   */
-  function excluirJogo(id, titulo) {
-    const confirmacao = window.confirm(`Deseja realmente remover o jogo "${titulo}" (ID #${id}) da lista de demonstração?`);
-    if (!confirmacao) {
-      return;
-    }
-
-    if (idEmEdicao === id) {
-      cancelarEdicao();
-    }
-
-    catalogoJogos = catalogoJogos.filter(j => j.id !== id);
-    persistirDados();
-    renderizarJogos();
-    atualizarEstatisticas();
-
-    exibirAlerta(`Jogo "${titulo}" (ID #${id}) foi removido do catálogo local.`, 'success');
-  }
-
-  /**
-   * Restaura os jogos padrão da demonstração
-   */
-  function restaurarDadosPadrao() {
-    if (window.confirm('Deseja restaurar os dados iniciais de demonstração? Quaisquer alterações feitas localmente serão substituídas.')) {
-      catalogoJogos = JSON.parse(JSON.stringify(DADOS_PADRAO));
-      cancelarEdicao();
-      persistirDados();
-      renderizarJogos();
-      atualizarEstatisticas();
-      exibirAlerta('Dados de demonstração restaurados com sucesso!', 'info');
-    }
-  }
-
-  /**
-   * Exibe mensagens de alerta com temporizador para fechamento automático
+   * Exibe mensagens de alerta com temporizador para auto-fechamento.
+   * Insere o texto com segurança via textContent.
    */
   function exibirAlerta(mensagem, tipo = 'info') {
     if (timerAlerta) {
@@ -322,16 +413,25 @@
     }
 
     feedbackAlert.className = `alert-box alert-${tipo}`;
+    feedbackAlert.innerHTML = '';
+
     const icones = {
       success: '✅',
       danger: '⚠️',
       info: 'ℹ️'
     };
 
-    feedbackAlert.innerHTML = `<span aria-hidden="true">${icones[tipo] || 'ℹ️'}</span> <span>${mensagem}</span>`;
+    const spanIcone = document.createElement('span');
+    spanIcone.setAttribute('aria-hidden', 'true');
+    spanIcone.textContent = icones[tipo] || 'ℹ️';
+
+    const spanTexto = document.createElement('span');
+    spanTexto.textContent = ` ${mensagem}`;
+
+    feedbackAlert.appendChild(spanIcone);
+    feedbackAlert.appendChild(spanTexto);
     feedbackAlert.classList.remove('hidden');
 
-    // Remove alerta após 4 segundos
     timerAlerta = setTimeout(() => {
       feedbackAlert.classList.add('hidden');
     }, 4500);
