@@ -228,10 +228,9 @@ A collection deve conter requisições para:
 O vídeo de demonstração apresentará o funcionamento do projeto, incluindo:
 
 - Execução da aplicação.
-- Preparação e utilização do banco de dados SQLite.
 - Explicação dos principais elementos do código.
 - Testes dos endpoints utilizando Bruno ou Postman.
 - Utilização da interface web para listar, cadastrar, editar e excluir jogos.
 - Verificação da persistência dos dados após reiniciar a API.
 
-**Link público do vídeo:** será adicionado após a gravação e publicação da demonstração.
+**Link público do vídeo:** https://drive.google.com/file/d/1ppQObKm2woQscMq2X6U7FuWqrsLh_XqA/view?usp=sharing
