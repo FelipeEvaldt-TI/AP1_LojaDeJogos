@@ -1,5 +1,7 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using ApiLojaDeJogos.Models;
+using ApiLojaDeJogos.Data;
+
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApiDbContext>(options =>
@@ -73,23 +75,3 @@ app.MapDelete("/api/jogos/{id:int}",async (int id, ApiDbContext db) =>
 });
 
 app.Run();
-
-class JogoEntity
-{
-  public int Id { get; set; }  
-  public string Nome { get; set;} = string.Empty;
-  public bool Disponivel { get; set;}
-};
-
-class ApiDbContext : DbContext
-{
-    public ApiDbContext(DbContextOptions<ApiDbContext> options) : base(options)
-    {
-    }
-
-    public DbSet<JogoEntity> Jogos => Set<JogoEntity>();
-}
-
-record Jogo(int id, string titulo, bool disponivel);
-record JogoDTO(string titulo);
-record JogoAtualizadoDTO (string titulo, bool disponivel);
