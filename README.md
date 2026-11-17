@@ -211,6 +211,55 @@ A collection deve conter requisições para:
 - Atualizar jogo.
 - Remover jogo.
 
+## Organização do projeto
+
+O projeto foi organizado em pastas para separar as responsabilidades e facilitar a manutenção do código.
+
+### Estrutura de pastas
+
+```text
+LojaDeJogos/
+│
+├── Data/
+│   └── ApiDbContext.cs
+│
+├── Dtos/
+│   ├── AtualizarJogoDto.cs
+│   ├── CriarJogoDto.cs
+│   └── Jogo.cs
+│
+├── Migrations/
+│   ├── Arquivos de migração
+│   └── ApiDbContextModelSnapshot.cs
+│
+├── Models/
+│   └── JogoEntity.cs
+│
+├── Properties/
+│
+├── wwwroot/
+│   ├── app.js
+│   ├── index.html
+│   └── style.css
+│
+├── appsettings.json
+├── appsettings.Development.json
+├── Program.cs
+└── LojaDeJogos.csproj
+```
+
+### Responsabilidade das pastas e arquivos
+
+- **Data:** contém o `ApiDbContext`, responsável pelo acesso ao banco de dados utilizando Entity Framework Core.
+- **Dtos:** contém os objetos utilizados para receber os dados enviados nas requisições da API.
+- **Migrations:** armazena as migrações responsáveis por controlar as alterações na estrutura do banco de dados.
+- **Models:** contém a entidade `JogoEntity`, que representa os jogos armazenados no banco.
+- **Properties:** armazena configurações relacionadas à execução e ao desenvolvimento do projeto.
+- **wwwroot:** contém os arquivos da interface web, incluindo HTML, CSS e JavaScript.
+- **Program.cs:** configura e inicializa a aplicação, o banco de dados e as rotas da API.
+- **appsettings.json:** armazena configurações da aplicação, incluindo a conexão com o banco de dados.
+- **LojaDeJogos.csproj:** contém as configurações e dependências do projeto.
+
 ## Tecnologias utilizadas
 
 - C#
