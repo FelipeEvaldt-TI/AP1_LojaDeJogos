@@ -211,6 +211,47 @@ A collection deve conter requisições para:
 - Atualizar jogo.
 - Remover jogo.
 
+## Tratamento de erros e middleware
+
+O projeto utiliza o middleware `UseExceptionHandler` para tratar exceções inesperadas durante a execução da API, evitando que detalhes técnicos sejam enviados ao cliente.
+
+### Teste de falha sem tratamento
+
+Inicialmente, foi adicionada temporariamente a rota `/api/teste-erro`, que provocava uma exceção `InvalidOperationException`.
+
+A chamada foi realizada pelo Bruno utilizando o método GET, permitindo observar o comportamento da API antes da implementação do middleware.
+
+No ambiente Development, a resposta podia apresentar detalhes técnicos da exceção.
+
+### Implementação do middleware
+
+Após o primeiro teste, foi adicionado ao `Program.cs` o middleware `UseExceptionHandler`, responsável por capturar exceções não tratadas.
+
+A resposta personalizada utiliza:
+
+- **Status HTTP:** `500 Internal Server Error`.
+- **Content-Type:** `application/json`.
+- **Mensagem:** "Ocorreu um erro interno. Tente novamente mais tarde."
+
+Dessa forma, os detalhes internos da exceção não são expostos ao usuário.
+
+### Comparação dos resultados
+
+| Situação | Comportamento |
+|---|---|
+| Antes do middleware | A exceção podia apresentar detalhes técnicos no ambiente Development. |
+| Depois do middleware | A API retorna HTTP 500 com uma mensagem genérica em JSON. |
+| Endpoint normal | Continua funcionando normalmente. |
+| Registro inexistente | Continua retornando HTTP 404. |
+
+### Finalização
+
+Após os testes, a rota temporária `/api/teste-erro` foi removida, mantendo apenas o middleware de tratamento de erros no projeto.
+
+Também foi executado `dotnet build` para verificar se a aplicação continuava compilando corretamente.
+
+**Importante:** a rota de teste foi utilizada somente durante a atividade e não faz parte da versão final da API.
+
 ## Organização do projeto
 
 O projeto foi organizado em pastas para separar as responsabilidades e facilitar a manutenção do código.
