@@ -313,14 +313,15 @@ LojaDeJogos/
 - Bruno ou Postman
 - Git e GitHub
 
-## Vídeo de demonstração — AP2
+## Vídeo de demonstração — AS
 
-O vídeo de demonstração apresentará o funcionamento do projeto, incluindo:
+O vídeo apresenta a avaliação semestral do projeto Loja de Jogos, demonstrando:
 
-- Execução da aplicação.
-- Explicação dos principais elementos do código.
-- Testes dos endpoints utilizando Bruno ou Postman.
-- Utilização da interface web para listar, cadastrar, editar e excluir jogos.
-- Verificação da persistência dos dados após reiniciar a API.
+- Organização do código em Models, Dtos e Data.
+- Explicação dos namespaces, imports e Program.cs.
+- Compilação e execução da API.
+- Testes completos do CRUD utilizando Bruno.
+- Verificação da persistência dos dados após reiniciar a aplicação.
+- Apresentação da Collection e da estrutura do projeto.
 
-**Link público do vídeo:** https://drive.google.com/file/d/1ppQObKm2woQscMq2X6U7FuWqrsLh_XqA/view?usp=sharing
+**Link público do vídeo:** [Assistir à demonstração da AS](https://drive.google.com/file/d/1juTGeWYutpUMhDXdljlCnNFHg-cmc3vK/view?usp=sharing)
